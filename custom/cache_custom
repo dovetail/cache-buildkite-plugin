@@ -1,10 +1,11 @@
 #!/bin/bash
-set -euo pipefail
 
 # By default cache-buildkite-plugin runs from the
 # backend folder of the plugin so want to use it to
 # source the cache_fs and cache_s3 files
 DIR="$(pwd)"
+
+echo "DIR: ${DIR}"
 
 # Check if the file exists before sourcing
 if [ -f "${DIR}/cache_fs" ]; then
