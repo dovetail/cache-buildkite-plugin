@@ -1,27 +1,29 @@
 #!/bin/bash
 
-# By default cache-buildkite-plugin runs from the
-# backend folder of the plugin so want to use it to
-# source the cache_fs and cache_s3 files
-DIR="$(pwd)"
+source_backends() {
+  # By default cache-buildkite-plugin runs from the
+  # backend folder of the plugin so want to use it to
+  # source the cache_fs and cache_s3 files
+  DIR="$(pwd)"
 
-echo "DIR: ${DIR}"
+  echo "PWD $(pwd)"
 
-# Check if the file exists before sourcing
-if [ -f "${DIR}/cache_fs" ]; then
-  # shellcheck source=backend/cache_fs
-  . "${DIR}/cache_fs"
-else
-  echo "cache_fs file not found"
-fi
+  # Check if the file exists before sourcing
+  if [ -f "${DIR}/cache_fs" ]; then
+    # shellcheck source=backend/cache_fs
+    source "${DIR}/cache_fs"
+  else
+    echo "cache_fs file not found"
+  fi
 
-# Check if the file exists before sourcing
-if [ -f "${DIR}/cache_s3" ]; then
-  # shellcheck source=backend/cache_s3
-  . "${DIR}/cache_s3"
-else
-  echo "cache_s3 file not found"
-fi
+  # Check if the file exists before sourcing
+  if [ -f "${DIR}/cache_s3" ]; then
+    # shellcheck source=backend/cache_s3
+    source  "${DIR}/cache_s3"
+  else
+    echo "cache_s3 file not found"
+  fi
+}
 
 restore_cache() {
     if cache_fs exists "${KEY}"; then
@@ -43,16 +45,20 @@ exists_cache() {
     cache_fs exists "$@" || cache_s3 exists "$@"
 }
 
+cache_custom() {
+  OPCODE="$1"
+  shift
 
-OPCODE="$1"
-shift
-
-if [ "$OPCODE" = 'exists' ]; then
-  exists_cache "$@"
-elif [ "$OPCODE" = 'get' ]; then
-  restore_cache "$@"
-elif [ "$OPCODE" = 'save' ]; then
-  save_cache "$@"
-else
-  exit 255
-fi
+  if [ "$OPCODE" = 'exists' ]; then
+    source_backends
+    exists_cache "$@"
+  elif [ "$OPCODE" = 'get' ]; then
+    source_backends
+    restore_cache "$@"
+  elif [ "$OPCODE" = 'save' ]; then
+    source_backends
+    save_cache "$@"
+  else
+    exit 255
+  fi
+}
