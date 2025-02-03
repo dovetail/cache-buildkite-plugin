@@ -1,0 +1,57 @@
+#!/bin/bash
+set -euo pipefail
+
+# By default cache-buildkite-plugin runs from the
+# backend folder of the plugin so want to use it to
+# source the cache_fs and cache_s3 files
+DIR="$(pwd)"
+
+# Check if the file exists before sourcing
+if [ -f "${DIR}/cache_fs" ]; then
+  # shellcheck source=backend/cache_fs
+  . "${DIR}/cache_fs"
+else
+  echo "cache_fs file not found"
+fi
+
+# Check if the file exists before sourcing
+if [ -f "${DIR}/cache_s3" ]; then
+  # shellcheck source=backend/cache_s3
+  . "${DIR}/cache_s3"
+else
+  echo "cache_s3 file not found"
+fi
+
+restore_cache() {
+    if cache_fs exists "${KEY}"; then
+        cache_fs get "$@"
+    elif cache_s3 exists "$@"; then
+        cache_s3 get "$@"
+    fi
+}
+
+save_cache() {
+    if cache_fs exists "${KEY}"; then
+        cache_fs save "$@"
+    elif cache_s3 exists "$@"; then
+        cache_s3 save "$@"
+    fi
+}
+
+exists_cache() {
+    cache_fs exists "$@" || cache_s3 exists "$@"
+}
+
+
+OPCODE="$1"
+shift
+
+if [ "$OPCODE" = 'exists' ]; then
+  exists_cache "$@"
+elif [ "$OPCODE" = 'get' ]; then
+  restore_cache "$@"
+elif [ "$OPCODE" = 'save' ]; then
+  save_cache "$@"
+else
+  exit 255
+fi

@@ -76,6 +76,7 @@ uncompress() {
     fi
 
     tar "${TAR_OPTS}"f "${FILE}" "${RESTORE_PATH}"
+    rm "${FILE}"
   elif [ "${COMPRESSION}" = 'zip' ]; then
     if is_absolute_path "${RESTORE_PATH}"; then
       local RESTORE_DIR
