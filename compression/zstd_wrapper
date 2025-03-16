@@ -1,0 +1,34 @@
+#!/bin/bash
+
+OPERATION=${1?Operation not specified}
+SOURCE=${2?Source not specified}
+TARGET=${3?Target not specified}
+
+is_absolute_path() {
+  [ "${1:0:1}" = "/" ]
+}
+
+if ! tar --help | grep -q -- "--zstd"; then
+  echo "tar does not support zstd compression"
+  echo "You need a version of tar with zstd support (tar 1.31 or higher)"
+  exit 1
+fi
+
+if [ "${OPERATION}" = "compress" ]; then
+    TAR_OPTS=('-c' '--zstd')
+    if is_absolute_path "${SOURCE}"; then
+      TAR_OPTS+=('-P')
+    fi
+
+    tar "${TAR_OPTS[@]}" -f "${TARGET}" "${SOURCE}"
+elif [ "${OPERATION}" = "decompress" ]; then
+    TAR_OPTS=('-x' '--zstd')
+    if is_absolute_path "${TARGET}"; then
+      TAR_OPTS+=('-P')
+    fi
+
+    tar "${TAR_OPTS[@]}" -f "${SOURCE}" "${TARGET}"
+else
+    echo "Invalid operation"
+    exit 1
+fi
